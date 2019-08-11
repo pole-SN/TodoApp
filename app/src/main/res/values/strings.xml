@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">TodoApp</string>
+    <string name="title">todos</string>
+
+    <string name="delete">Delete</string>
+    <string name="radio_all">All</string>
+    <string name="radio_active">Active</string>
+    <string name="radio_completed">Completed</string>
+    <string name="item_left">1 item left</string>
+    <string name="items_left">%d items left</string>
+    <string name="hint">What needs to be done?</string>
+</resources>
