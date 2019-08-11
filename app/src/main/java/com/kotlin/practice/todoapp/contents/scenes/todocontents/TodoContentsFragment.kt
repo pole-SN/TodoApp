@@ -8,7 +8,6 @@ import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.RadioGroup
 import android.widget.TextView
-import android.widget.ToggleButton
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -19,19 +18,20 @@ import kotlinx.android.synthetic.main.fragment_contents_list.view.*
 
 
 interface DisplayLogic {
-    fun displayTaskData(viewModel: FetchTasks.FetchTaskData.ViewModel)
-    fun displayUpdateTaskData(viewModel: UpdateTasks.UpdateTaskData.ViewModel)
-    fun displayDeleteTaskData(viewModel: DeleteTasks.DeleteTaskData.ViewModel)
+    fun displayTaskData(response: FetchTasks.FetchTaskData.Response)
+    fun displayUpdateTaskData(response: UpdateTasks.UpdateTaskData.Response)
+    fun displayDeleteTaskData(response: DeleteTasks.DeleteTaskData.Response)
 }
 
 class TodoContentsFragment : Fragment(), DisplayLogic {
 
     private lateinit var mInteractor: BusinessLogic
-    private lateinit var mToggle: ToggleButton
+    private lateinit var mListener: ListRequestListener
+    private lateinit var mTaskList: MutableList<TaskData>
+
     private lateinit var mClearCompleted: Button
     private lateinit var mRadioGroup: RadioGroup
     private lateinit var mItemCount: TextView
-    private lateinit var mListener: ListRequestListener
 
     init {
         setup()
@@ -61,9 +61,9 @@ class TodoContentsFragment : Fragment(), DisplayLogic {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        setupViews(view)
-
         fetchTaskData()
+
+        setupViews(view)
     }
 
     private fun setupViews(view: View) {
@@ -73,7 +73,7 @@ class TodoContentsFragment : Fragment(), DisplayLogic {
                     var task = view.input_text_view.text.toString()
                     if (task.isNotBlank()) {
                         var passList: List<TaskData> = listOf(
-                            TaskData(0, task, false)
+                            TaskData(-1, task, false)
                         )
                         updateTaskData(passList)
                     }
@@ -88,10 +88,17 @@ class TodoContentsFragment : Fragment(), DisplayLogic {
         view.recycler_view.apply {
             layoutManager = LinearLayoutManager(context)
             addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
+            val adapter = TaskDataAdapter(
+                mTaskList,
+                mListener,
+                resources.getDimensionPixelSize(R.dimen.listHeight)
+            )
+            adapter.setHasStableIds(true)
+            this.adapter = adapter
+            this.adapter?.notifyDataSetChanged()
         }
 
-        mToggle = view.allselect_toggle
-        mToggle.run {
+        view.allselect_toggle.run {
             setOnClickListener {
                 updateAllCheckBox(this.isChecked)
             }
@@ -112,6 +119,7 @@ class TodoContentsFragment : Fragment(), DisplayLogic {
         }
 
         mItemCount = view.item_count
+        mListener.onUiUpdate(mTaskList)
     }
 
     private fun fetchTaskData() {
@@ -132,44 +140,70 @@ class TodoContentsFragment : Fragment(), DisplayLogic {
         mInteractor.deleteCheckedTaskData()
     }
 
-    private fun deleteTaskData(primaryKeys: List<Int>) {
+    private fun deleteTaskData(primaryKeys: List<Long>) {
         val request = DeleteTasks.DeleteTaskData.Request(primaryKeys)
         mInteractor.deleteTaskData(request)
     }
 
-    override fun displayTaskData(viewModel: FetchTasks.FetchTaskData.ViewModel) {
-        recycler_view.adapter =
-            TaskDataAdapter(
-                viewModel.taskList,
-                mListener,
-                resources.getDimensionPixelSize(R.dimen.listHeight)
-            )
-        val adapter = recycler_view.adapter
-        if (adapter?.itemCount == 0) {
-            hooter.visibility = View.GONE
-            mToggle.visibility = View.INVISIBLE
-        } else {
-            hooter.visibility = View.VISIBLE
-            mToggle.visibility = View.VISIBLE
+    override fun displayTaskData(response: FetchTasks.FetchTaskData.Response) {
+        mTaskList = response.taskList.toMutableList()
+        recycler_view.adapter?.notifyDataSetChanged()
+    }
+
+    override fun displayUpdateTaskData(response: UpdateTasks.UpdateTaskData.Response) {
+        for (responseData in response.taskList) {
+            var foundKey: Long = -1
+            for (localData in mTaskList) {
+                if (responseData.primaryKey == localData.primaryKey) {
+                    foundKey = localData.primaryKey
+                }
+                if (foundKey > -1) {
+                    if (!responseData.task.equals(localData.task)
+                        || !responseData.isChecked.equals(localData.isChecked)
+                    ) {
+                        localData.task = responseData.task
+                        localData.isChecked = responseData.isChecked
+                        var position = mTaskList.indexOf(localData)
+                        recycler_view.adapter?.notifyItemChanged(position)
+                    }
+                    break
+                }
+            }
+            if (foundKey.equals(-1L)) {
+                mTaskList.add(responseData)
+                recycler_view.adapter?.notifyItemInserted(responseData.primaryKey.toInt())
+            }
         }
     }
 
-    override fun displayUpdateTaskData(viewModel: UpdateTasks.UpdateTaskData.ViewModel) {
-        fetchTaskData()
-    }
-
-    override fun displayDeleteTaskData(viewModel: DeleteTasks.DeleteTaskData.ViewModel) {
-        fetchTaskData()
+    override fun displayDeleteTaskData(response: DeleteTasks.DeleteTaskData.Response) {
+        var foundKey: Long = -1
+        var iterator = mTaskList.iterator()
+        for (localData in iterator) {
+            for (responseData in response.taskList) {
+                if (responseData.primaryKey == localData.primaryKey) {
+                    foundKey = localData.primaryKey
+                    break
+                }
+            }
+            if (foundKey.equals(-1L)) {
+                var position = mTaskList.indexOf(localData)
+                iterator.remove()
+                recycler_view.adapter?.notifyItemRemoved(position)
+            }
+            foundKey = -1
+        }
+        mListener.onUiUpdate(mTaskList)
     }
 
     interface ListRequest {
         fun onListUpdate(taskList: List<TaskData>)
-        fun onListDelete(primaryKeys: List<Int>)
+        fun onListDelete(primaryKeys: List<Long>)
         fun onUiUpdate(taskList: List<TaskData>)
     }
 
     inner class ListRequestListener : ListRequest {
-        override fun onListDelete(primaryKeys: List<Int>) {
+        override fun onListDelete(primaryKeys: List<Long>) {
             deleteTaskData(primaryKeys)
         }
 
@@ -187,19 +221,27 @@ class TodoContentsFragment : Fragment(), DisplayLogic {
 
         private fun setupDependsOnViews(taskList: List<TaskData>) {
             mClearCompleted.visibility = getClearCompletedVisibility(taskList)
-            mToggle.isChecked = isAllChecked(taskList)
+            allselect_toggle.isChecked = isAllChecked(taskList)
             updateItemCount(taskList)
+            var itemCount = recycler_view.adapter?.itemCount ?: 0
+            if (itemCount > 0) {
+                hooter.visibility = View.VISIBLE
+                allselect_toggle.visibility = View.VISIBLE
+            } else {
+                hooter.visibility = View.GONE
+                allselect_toggle.visibility = View.INVISIBLE
+            }
         }
 
         private fun getClearCompletedVisibility(taskList: List<TaskData>): Int {
-            taskList.forEach {
+            for (it in taskList) {
                 if (it.isChecked) return View.VISIBLE
             }
             return View.INVISIBLE
         }
 
         private fun isAllChecked(taskList: List<TaskData>): Boolean {
-            taskList.forEach {
+            for (it in taskList) {
                 if (!it.isChecked) return false
             }
             return true
@@ -207,7 +249,7 @@ class TodoContentsFragment : Fragment(), DisplayLogic {
 
         private fun updateItemCount(taskList: List<TaskData>) {
             var count = 0
-            taskList.forEach {
+            for (it in taskList) {
                 if (!it.isChecked) count++
             }
             mItemCount.text = getItemCountString(count)

@@ -6,10 +6,6 @@ object FetchTasks {
     object FetchTaskData {
         class Request
         data class Response(
-            val taskList: List<TaskData>?
-        )
-
-        data class ViewModel(
             val taskList: List<TaskData>
         )
     }
@@ -18,22 +14,23 @@ object FetchTasks {
 object UpdateTasks {
     object UpdateTaskData {
         data class Request(
-            val taskList: List<TaskData>?
+            val taskList: List<TaskData>
         )
 
-        class Response
-        class ViewModel
+        data class Response(
+            val taskList: List<TaskData>
+        )
     }
 }
-
 
 object DeleteTasks {
     object DeleteTaskData {
         data class Request(
-            val primaryKeys: List<Int>
+            val primaryKeys: List<Long>
         )
 
-        class Response
-        class ViewModel
+        data class Response(
+            val taskList: List<TaskData>
+        )
     }
 }

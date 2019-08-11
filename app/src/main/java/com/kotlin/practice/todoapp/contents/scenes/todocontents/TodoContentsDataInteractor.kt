@@ -13,7 +13,7 @@ interface BusinessLogic {
 }
 
 interface DataStore {
-    var taskList: List<TaskData>?
+    var taskList: List<TaskData>
     var taskData: TaskData?
     var primaryKeys: List<String>
 }
@@ -21,43 +21,44 @@ interface DataStore {
 class TodoContentsDataInteractor : BusinessLogic, DataStore {
     lateinit var mPresenter: PresentationLogic
     private val mTaskDataProvider = TaskDataProvider(TaskDataRealmStore())
-    override var taskList: List<TaskData>? = null
+    override var taskList: List<TaskData> = mTaskDataProvider.fetchTaskData()
     override var taskData: TaskData? = null
     override var primaryKeys: List<String> = listOf()
 
     override fun fetchTaskData(request: FetchTasks.FetchTaskData.Request) {
-        val taskList = mTaskDataProvider.fetchTaskData()
+        this.taskList = mTaskDataProvider.fetchTaskData()
         this.taskList = taskList
 
-        val response = FetchTasks.FetchTaskData.Response(taskList)
+        val response = FetchTasks.FetchTaskData.Response(this.taskList)
         mPresenter.presentTaskData(response)
     }
 
     override fun updateAllCheckBox(isChecked: Boolean) {
-        val taskList = mTaskDataProvider.fetchTaskData()?.map {
+        val taskList = mTaskDataProvider.fetchTaskData().map {
             TaskData(it.primaryKey, it.task, isChecked)
         }
         updateTaskData(UpdateTasks.UpdateTaskData.Request(taskList))
     }
 
     override fun updateTaskData(request: UpdateTasks.UpdateTaskData.Request) {
-        taskList = request.taskList?.map {
+        this.taskList = request.taskList.map {
             TaskData(it.primaryKey, it.task, it.isChecked)
         }
 
-        mTaskDataProvider.updateTaskData(taskList)
+        mTaskDataProvider.updateTaskData(this.taskList)
 
-        val response = UpdateTasks.UpdateTaskData.Response()
+        this.taskList = mTaskDataProvider.fetchTaskData()
+        val response = UpdateTasks.UpdateTaskData.Response(this.taskList)
         mPresenter.presentUpdateTaskData(response)
     }
 
     override fun deleteCheckedTaskData() {
-        val taskList = mTaskDataProvider.fetchTaskData()?.map {
+        val taskList = mTaskDataProvider.fetchTaskData().map {
             TaskData(it.primaryKey, it.task, it.isChecked)
         }
 
-        var primaryKeys = mutableListOf<Int>()
-        taskList?.forEach {
+        var primaryKeys = mutableListOf<Long>()
+        for (it in taskList) {
             if (it.isChecked) {
                 primaryKeys.add(it.primaryKey)
             }
@@ -69,7 +70,8 @@ class TodoContentsDataInteractor : BusinessLogic, DataStore {
     override fun deleteTaskData(request: DeleteTasks.DeleteTaskData.Request) {
         mTaskDataProvider.deleteTaskData(request.primaryKeys)
 
-        val response = DeleteTasks.DeleteTaskData.Response()
+        this.taskList = mTaskDataProvider.fetchTaskData()
+        val response = DeleteTasks.DeleteTaskData.Response(this.taskList)
         mPresenter.presentDeleteTaskData(response)
     }
 }

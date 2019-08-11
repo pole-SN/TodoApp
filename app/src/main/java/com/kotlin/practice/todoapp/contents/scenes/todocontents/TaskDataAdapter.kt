@@ -40,7 +40,7 @@ class TaskDataAdapter(
             view.task_checkbox.isChecked = taskData.isChecked
 
             view.task_delete_button.setOnClickListener {
-                var primaryKeys: List<Int> = listOf(taskData.primaryKey)
+                var primaryKeys: List<Long> = listOf(taskData.primaryKey)
                 mListener.onListDelete(primaryKeys)
             }
 
@@ -92,5 +92,10 @@ class TaskDataAdapter(
 
     override fun getItemCount(): Int {
         return mTaskList.size
+    }
+
+    override fun getItemId(position: Int): Long {
+        val id = mTaskList[position].primaryKey
+        return id
     }
 }

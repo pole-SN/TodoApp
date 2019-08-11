@@ -9,4 +9,5 @@
     <string name="item_left">1 item left</string>
     <string name="items_left">%d items left</string>
     <string name="hint">What needs to be done?</string>
+    <string name="clear_completed">clear completed</string>
 </resources>

@@ -85,8 +85,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentLeft="true"
-                        android:layout_centerVertical="true"
-                        android:text="test"/>
+                        android:layout_centerVertical="true"/>
 
                 <Button
                         android:id="@+id/clear_completed_button"
@@ -95,7 +94,7 @@
                         android:layout_alignParentRight="true"
                         android:background="@drawable/clear_completed_button_design"
                         style="@style/clearCompletedButton"
-                        android:text="clear completed"/>
+                        android:text="@string/clear_completed"/>
 
             </RelativeLayout>
 

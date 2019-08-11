@@ -8,7 +8,7 @@ import io.realm.Sort
 import io.realm.annotations.PrimaryKey
 
 open class TaskDataObject(
-    @PrimaryKey open var primaryKey: Int = 0,
+    @PrimaryKey open var primaryKey: Long = 0,
     open var task: String = "",
     open var isChecked: Boolean = false
 ) : RealmObject() {
@@ -31,7 +31,7 @@ open class TaskDataObject(
 }
 
 class TaskDataRealmStore : TaskDataStoreInterface {
-    override fun fetchTaskData(): List<TaskData>? {
+    override fun fetchTaskData(): List<TaskData> {
         return Realm.getDefaultInstance().use {
             it.where(TaskDataObject::class.java)
                 .findAll()
@@ -40,10 +40,10 @@ class TaskDataRealmStore : TaskDataStoreInterface {
         }
     }
 
-    override fun updateTaskData(taskList: List<TaskData>?) {
-        taskList?.forEach {
+    override fun updateTaskData(taskList: List<TaskData>) {
+        for (it in taskList) {
             val taskDataObject = TaskDataObject.from(it)
-            if (taskDataObject.primaryKey == 0) taskDataObject.primaryKey = getNextPrimaryKey()
+            if (taskDataObject.primaryKey < 0) taskDataObject.primaryKey = getNextPrimaryKey()
             Realm.getDefaultInstance().use {
                 it.run {
                     beginTransaction()
@@ -54,8 +54,8 @@ class TaskDataRealmStore : TaskDataStoreInterface {
         }
     }
 
-    override fun deleteTaskData(primaryKeys: List<Int>) {
-        primaryKeys.forEach {
+    override fun deleteTaskData(primaryKeys: List<Long>) {
+        for (it in primaryKeys) {
             var primaryKey = it
             Realm.getDefaultInstance().use {
                 val taskDataObject = it.where(TaskDataObject::class.java)
@@ -71,14 +71,14 @@ class TaskDataRealmStore : TaskDataStoreInterface {
         }
     }
 
-    private fun getNextPrimaryKey(): Int {
-        var nextPrimaryKey: Int = 1
+    private fun getNextPrimaryKey(): Long {
+        var nextPrimaryKey: Long = 0
         val maxPrimaryKey =
             Realm.getDefaultInstance().use {
                 it.where(TaskDataObject::class.java).max("primaryKey")
             }
         if (maxPrimaryKey != null) {
-            nextPrimaryKey = maxPrimaryKey.toInt() + 1
+            nextPrimaryKey = maxPrimaryKey.toLong() + 1
         }
         return nextPrimaryKey
     }
