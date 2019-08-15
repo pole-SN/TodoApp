@@ -1,7 +1,7 @@
 package com.kotlin.practice.todoapp.root
 
 import com.kotlin.practice.todoapp.R
-import com.kotlin.practice.todoapp.contents.scenes.todocontents.TodoContentsFragment
+import com.kotlin.practice.todoapp.contents.ui.TodoContentsFragment
 
 interface FragmentReplacerInterface {
     fun replaceToTodoContentsFragment()

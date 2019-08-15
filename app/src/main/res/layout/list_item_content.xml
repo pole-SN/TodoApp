@@ -1,41 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<RelativeLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/layout_list_item"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/listHeight"
+        android:layout_height="@dimen/listItemHeight"
         android:padding="4dp">
 
     <CheckBox
             android:id="@+id/task_checkbox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintStart_toStartOf="@id/layout_list_item"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            android:layout_alignParentLeft="true"
+            android:layout_centerInParent="true"/>
 
     <TextView
             android:id="@+id/task_text_view"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
             android:maxLines="1"
             android:ellipsize="end"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@id/task_checkbox"
-            app:layout_constraintEnd_toStartOf="@id/task_delete_button"/>
+            android:layout_centerInParent="true"
+            android:layout_toRightOf="@id/task_checkbox"
+            android:layout_toLeftOf="@id/task_delete_button"/>
 
     <Button
             android:id="@+id/task_delete_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/delete_button_design"
-            style="@style/deleteButton"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            android:layout_centerInParent="true"
+            android:layout_alignParentRight="true"
+            style="@style/deleteButton"/>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</RelativeLayout>

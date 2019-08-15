@@ -115,6 +115,7 @@
                         android:layout_weight="1"
                         android:layout_marginLeft="5dp"
                         android:layout_marginRight="5dp"
+                        android:padding="10dp"
                         android:text="@string/radio_all"
                         android:button="@null"
                         android:gravity="center"
@@ -129,6 +130,7 @@
                         android:layout_weight="1"
                         android:layout_marginLeft="5dp"
                         android:layout_marginRight="5dp"
+                        android:padding="10dp"
                         android:text="@string/radio_active"
                         android:button="@null"
                         android:gravity="center">
@@ -142,6 +144,7 @@
                         android:layout_weight="1"
                         android:layout_marginLeft="5dp"
                         android:layout_marginRight="5dp"
+                        android:padding="10dp"
                         android:text="@string/radio_completed"
                         android:button="@null"
                         android:gravity="center">
